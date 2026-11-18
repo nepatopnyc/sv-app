@@ -34,7 +34,13 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}input,text
 <button class="btn" id="rs-btn">Verify and restore original</button><div id="rs-msg" class="msg"></div></div></section>
 
 <section class="screen hide" id="s-mfa"><div class="card"><h2 id="mfa-title">2-factor login</h2>
-<div id="mfa-enroll" class="hide"><p class="note">Open an authenticator app (Google Authenticator, Microsoft Authenticator or 1Password), add an account, and scan this code. Or type the key below.</p><img id="mfa-qr" class="qr" alt="QR code"><p class="note mono" id="mfa-secret" style="text-align:center;word-break:break-all"></p></div>
+<div id="mfa-enroll" class="hide"><p class="note"><b>Easiest:</b> install Google Authenticator, then tap the button below. It opens the app and adds the account automatically. No key to copy.</p>
+<a class="btn" id="mfa-link" style="display:block;text-align:center;text-decoration:none">Add to authenticator app</a>
+<p class="note" style="margin-top:12px">Or scan this QR code from another device:</p><img id="mfa-qr" class="qr" alt="QR code">
+<p class="note">⚠️ Do not screenshot this screen. The QR code and key are secret.</p>
+<button class="btn sec sm" id="mfa-show" type="button">Show setup key (only if the button does not work)</button>
+<p class="note mono hide" id="mfa-secret" style="text-align:center;word-break:break-all;font-size:15px;color:var(--txt)"></p>
+<button class="btn sec sm" id="mfa-new" type="button" style="margin-top:8px">Key was exposed? Create a new one</button></div>
 <label>6-digit code</label><input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button class="btn" id="mfa-btn">Verify</button><button class="btn sec signout">Sign out</button><div id="mfa-msg" class="msg"></div></div></section>
 
 <section class="screen hide" id="s-claim"><div class="card"><h2>Almost done</h2><p class="note">Your account and 2-factor login are set up. Tell NEX <b>"account created"</b>. NEX will check that your email is confirmed and make this account the vault owner. Then tap <b>Reload</b>.</p>

@@ -107,15 +107,29 @@ $('signup').onclick = async () => {
     msg('auth-msg', 'Check your email and tap the confirmation link. Then come back here and sign in. (If the link opens an error page, your email is still confirmed.)');
   } catch (e) { busy(b, false); msg('auth-msg', e.message, true); }
 };
+let qrUrl = null;
+function clearEnroll() { if (qrUrl) { URL.revokeObjectURL(qrUrl); qrUrl = null; } $('mfa-qr').removeAttribute('src'); $('mfa-secret').textContent = ''; $('mfa-secret').classList.add('hide'); $('mfa-link').removeAttribute('href'); }
+function svgToBlobUrl(dataUri) {
+  // Supabase returns "data:image/svg+xml;utf-8,<svg ...>" (not URL-encoded), which Safari may not render. Convert to a Blob URL.
+  let svg = String(dataUri || ''); const i = svg.indexOf(','); if (i >= 0) svg = svg.slice(i + 1);
+  if (/^%3C/i.test(svg)) { try { svg = decodeURIComponent(svg); } catch {} }
+  if (!/<svg[\s>]/i.test(svg)) return null;
+  return URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+}
 async function startEnroll(user) {
+  clearEnroll();
   for (const f of (user.factors || [])) if (f.status !== 'verified') { try { await api.unenroll(f.id); } catch {} }
   const d = await api.enroll('Vault ' + Date.now());
-  mfaFactorId = d.id; $('mfa-qr').src = d.totp.qr_code; $('mfa-secret').textContent = d.totp.secret;
+  mfaFactorId = d.id;
+  qrUrl = svgToBlobUrl(d.totp.qr_code); if (qrUrl) $('mfa-qr').src = qrUrl;
+  $('mfa-link').href = d.totp.uri; $('mfa-secret').textContent = d.totp.secret;
   $('mfa-enroll').classList.remove('hide'); $('mfa-title').textContent = 'Turn on 2-factor login'; $('mfa-code').value = ''; show('s-mfa');
 }
+$('mfa-show').onclick = () => { $('mfa-secret').classList.toggle('hide'); };
+$('mfa-new').onclick = async () => { try { const u = await api.user(); await startEnroll(u); msg('mfa-msg', 'A new setup key was created. The previous one no longer works.'); } catch (e) { msg('mfa-msg', e.message, true); } };
 $('mfa-btn').onclick = async () => {
   const b = $('mfa-btn'); busy(b, true);
-  try { await api.verifyTotp(mfaFactorId, $('mfa-code').value.trim()); msg('mfa-msg', ''); busy(b, false); route(); }
+  try { await api.verifyTotp(mfaFactorId, $('mfa-code').value.trim()); clearEnroll(); msg('mfa-msg', ''); busy(b, false); route(); }
   catch (e) { busy(b, false); msg('mfa-msg', 'Code not accepted: ' + e.message, true); }
 };
 $('claim-btn').onclick = async () => {
