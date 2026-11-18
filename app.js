@@ -83,7 +83,7 @@ async function route() {
     if (!st.is_owner) return show('s-notowner');
     const k = await api.select('vault_keys', 'select=*&user_id=eq.' + uid); keysRow = k[0] || null;
     if (!kek) { $('pass-confirm-wrap').classList.toggle('hide', !!keysRow); $('pass-title').textContent = keysRow ? 'Unlock your vault' : 'Create your vault passphrase'; $('pass-btn').textContent = keysRow ? 'Unlock' : 'Create vault'; return show('s-pass'); }
-    show('s-vault'); loadList(); showHead();
+    show('s-vault'); loadList(); showHead(); loadDms();
   } catch (e) {
     if (e.status === 401 || e.status === 403) { api.save(null); }
     msg('auth-msg', 'Cannot reach the vault server right now (' + (e.message || e) + '). Backup files can still be opened below.', true); show('s-auth');
@@ -343,3 +343,32 @@ $('test-btn').onclick = async () => {
 };
 
 route();
+
+// ---------- safety switch (server-side monitor; alerts only, never evidence) ----------
+const fmtT = t => t ? new Date(t).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+let dmsEditId = null;
+async function loadDms() {
+  let s; try { s = await api.rpc('dms_status'); } catch (e) { msg('dms-msg', 'Could not load: ' + e.message, true); return; }
+  $('dms-state').textContent = s.active ? 'ACTIVE' : 'OFF (testing)';
+  const lv = ['all clear', 'reminder sent to you', 'contacts alerted', 'follow-up sent to contacts'][s.level] || '';
+  $('dms-summary').textContent = s.active ? `Last check-in ${fmtT(s.last_checkin)}. Next due ${fmtT(s.next_due)}. Status: ${lv}${s.reached_by ? ' (reached by ' + s.reached_by + ')' : ''}.` : 'The switch is off. No alerts will be sent until you activate it after testing.';
+  $('s-int').value = String(s.interval_min); $('s-grace').value = String(s.grace_min); $('s-verify').value = String(s.verify_wait_min); $('s-sender').value = s.sender_email || '';
+  $('dms-contacts').innerHTML = s.contacts.map(c => `<div class="item"><div class="grow"><b>${esc(c.name)}</b> <span class="${c.confirmed_at ? 'ok' : 'note'}">${c.confirmed_at ? '✓ confirmed' : (c.email ? (c.confirm_sent_at ? 'waiting for confirmation' : 'not confirmed') : 'email needed')}</span>
+    <small>${esc(c.email || 'no email')} ${c.phone ? '· ' + esc(c.phone) : ''} ${c.region ? '· ' + esc(c.region) : ''}</small></div>
+    <div class="btns"><button class="btn sm sec" data-ce="${esc(c.id)}">Edit</button>${c.email && !c.confirmed_at ? `<button class="btn sm" data-cc="${esc(c.id)}">Send confirmation</button>` : ''}<button class="btn sm sec" data-cr="${esc(c.id)}">Remove</button></div></div>`).join('') || '<p class="note">No contacts.</p>';
+  document.querySelectorAll('[data-ce]').forEach(b => b.onclick = () => { const c = s.contacts.find(x => x.id === b.dataset.ce); dmsEditId = c.id; $('c-name').value = c.name; $('c-email').value = c.email || ''; $('c-phone').value = c.phone || ''; $('c-region').value = c.region || ''; $('c-save').textContent = 'Save changes to ' + c.name; $('c-name').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+  document.querySelectorAll('[data-cc]').forEach(b => b.onclick = async () => { try { await api.rpc('dms_send_confirm', { p_id: b.dataset.cc }); msg('c-msg', 'Confirmation email queued. It is sent within a minute once Brevo is connected.'); loadDms(); } catch (e) { msg('c-msg', e.message, true); } });
+  document.querySelectorAll('[data-cr]').forEach(b => b.onclick = async () => { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = 'Sure?'; return; } try { await api.rpc('dms_remove_contact', { p_id: b.dataset.cr }); loadDms(); } catch (e) { msg('c-msg', e.message, true); } });
+  $('dms-outbox').innerHTML = s.outbox.map(o => `<div class="item"><span>${o.test ? '🧪 ' : ''}${esc(o.kind)} → ${esc(o.to_name || '')}</span><small>${o.sent_at ? '✓ delivered to Brevo ' + esc(fmtT(o.sent_at)) : o.error ? '✗ ' + esc(o.error) : '⏳ waiting'}</small></div>`).join('') || 'None yet.';
+}
+$('dms-checkin').onclick = async () => { try { const t = await api.rpc('dms_check_in'); msg('dms-msg', 'Checked in at ' + fmtT(t) + ' ✓'); loadDms(); } catch (e) { msg('dms-msg', e.message, true); } };
+$('c-save').onclick = async () => {
+  try { await api.rpc('dms_save_contact', { p_id: dmsEditId, p_name: $('c-name').value, p_email: $('c-email').value, p_phone: $('c-phone').value, p_region: $('c-region').value });
+    dmsEditId = null; ['c-name', 'c-email', 'c-phone', 'c-region'].forEach(i => $(i).value = ''); $('c-save').textContent = 'Save contact'; msg('c-msg', 'Saved. If the email changed, send a new confirmation.'); loadDms(); }
+  catch (e) { msg('c-msg', e.message, true); }
+};
+$('s-save').onclick = async () => { try { await api.rpc('dms_save_settings', { p_interval: +$('s-int').value, p_grace: +$('s-grace').value, p_verify: +$('s-verify').value, p_sender: $('s-sender').value.trim() }); msg('s-msg', 'Settings saved.'); loadDms(); } catch (e) { msg('s-msg', e.message, true); } };
+$('s-pin-save').onclick = async () => { try { await api.rpc('dms_set_pin', { p_pin: $('s-pin').value.trim() }); $('s-pin').value = ''; msg('s-msg', 'PIN set. Use it on the check-in page.'); } catch (e) { msg('s-msg', e.message, true); } };
+$('dms-test').onclick = async () => { try { const n = await api.rpc('dms_test_alert'); msg('dms-act-msg', `Test queued for ${n} confirmed contact(s) and you. Watch "Recent emails" for delivery.`); setTimeout(loadDms, 70000); loadDms(); } catch (e) { msg('dms-act-msg', e.message, true); } };
+$('dms-on').onclick = async () => { try { await api.rpc('dms_activate', { p_on: true }); msg('dms-act-msg', 'Safety switch ACTIVE. Your first check-in is recorded now.'); loadDms(); } catch (e) { msg('dms-act-msg', e.message, true); } };
+$('dms-off').onclick = async () => { try { await api.rpc('dms_activate', { p_on: false }); msg('dms-act-msg', 'Safety switch turned off. You were emailed a notice.'); loadDms(); } catch (e) { msg('dms-act-msg', e.message, true); } };

@@ -10,7 +10,7 @@
 h1{font-size:22px;margin:0}.brand{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:3px}.brand b{color:var(--gold)}.brand img{width:20px;height:20px;border-radius:4px}
 .card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
 h2{font-size:16px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}input,textarea{width:100%;background:#071022;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px;font-size:16px}textarea{min-height:80px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}input,textarea,select{width:100%;background:#071022;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px;font-size:16px}textarea{min-height:80px}
 .btn{appearance:none;border:0;border-radius:14px;padding:13px 18px;font-weight:600;font-size:16px;cursor:pointer;color:#04110a;background:linear-gradient(180deg,#7dff4a,#3ccf1f);width:100%;margin-top:12px}
 .btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}.btn.sm{width:auto;padding:8px 12px;font-size:14px;margin-top:0}.btn:disabled{opacity:.6}
 .row{display:flex;gap:8px}.row>*{flex:1}.hide{display:none!important}.note{font-size:13px;color:var(--mut);line-height:1.5}
@@ -49,6 +49,26 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}input,text
 
 <section class="screen hide" id="s-vault">
 <div class="card"><h2>Vault unlocked <span class="pill" id="count"></span></h2><small id="who"></small><div class="row"><button class="btn sec" id="lock">Lock</button><button class="btn sec signout">Sign out</button></div><p class="note">The vault locks itself after 10 minutes without activity.</p></div>
+<div class="card" id="dms-card"><h2>Safety switch <span class="pill" id="dms-state">…</span></h2>
+<p class="note" id="dms-summary"></p>
+<button class="btn" id="dms-checkin">✓ I'm safe: check in now</button>
+<p class="note">Quick check-in without signing in: <b>check-in page</b> (checkin.html) with your PIN, or the link in each reminder email.</p>
+<div id="dms-msg" class="msg"></div></div>
+<div class="card"><h2>Emergency contacts</h2><p class="note">They receive safety alerts only. They never get files, evidence or vault access. Each must confirm a test email before they can receive alerts.</p>
+<div id="dms-contacts"></div>
+<label>Name</label><input id="c-name"><label>Email</label><input id="c-email" type="email"><label>Phone (stored for later; SMS is not active, it needs a paid service)</label><input id="c-phone" type="tel"><label>Region</label><input id="c-region" placeholder="US or Nepal">
+<button class="btn sec" id="c-save">Save contact</button><div id="c-msg" class="msg"></div></div>
+<div class="card"><h2>Switch settings</h2>
+<div class="row"><div><label>Check in every</label><select id="s-int"><option value="360">6 hours</option><option value="720">12 hours</option><option value="1440">24 hours</option></select></div>
+<div><label>Grace period</label><select id="s-grace"><option value="30">30 minutes</option><option value="60">60 minutes</option><option value="120">2 hours</option></select></div></div>
+<label>Follow-up if no one reaches you</label><select id="s-verify"><option value="120">after 2 hours</option><option value="240">after 4 hours</option><option value="480">after 8 hours</option></select>
+<label>Sender email (the address you verified in Brevo)</label><input id="s-sender" type="email">
+<button class="btn sec" id="s-save">Save settings</button>
+<label>Check-in PIN (6 to 12 digits)</label><input id="s-pin" inputmode="numeric" type="password" autocomplete="off"><button class="btn sec" id="s-pin-save">Set PIN</button>
+<div id="s-msg" class="msg"></div></div>
+<div class="card"><h2>Test and activate</h2><p class="note">1) Each contact confirms their email. 2) Send a test alert (clearly marked TEST). 3) When the test shows "delivered", activate.</p>
+<button class="btn sec" id="dms-test">Send test alert</button><button class="btn" id="dms-on">Activate safety switch</button><button class="btn sec" id="dms-off">Turn off</button><div id="dms-act-msg" class="msg"></div>
+<h2 style="margin-top:16px">Recent emails</h2><div id="dms-outbox" class="note"></div></div>
 <div class="card"><h2>1. Run security tests first</h2><p class="note">Creates a small random test file (40 KB, not evidence; it stays in the vault marked 🧪) and checks encryption, storage, access control, tamper protection and backup on this device and this server.</p><button class="btn" id="test-btn">Run security tests</button><div id="test-out"></div></div>
 <div class="card"><h2>Add evidence</h2><p class="note">Files are kept exactly as they are: no compression, no conversion, no editing. Keep your originals on your phone too.</p>
 <label>Title</label><input id="up-title" placeholder="e.g. Messenger threat screenshots"><label>Note (date, time, place, who, what happened)</label><textarea id="up-note"></textarea>
