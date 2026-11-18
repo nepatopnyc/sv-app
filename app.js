@@ -146,6 +146,7 @@ $('pass-btn').onclick = async () => {
   } catch (e) { busy(b, false); msg('pass-msg', e.message || String(e), true); }
 };
 $('lock').onclick = () => lockVault();
+$('claim-reload').onclick = () => route();
 
 // ---------- upload ----------
 async function uploadFile(file, title, note, chunkSize = CHUNK, onProgress = () => {}, extraMeta = {}) {

@@ -37,8 +37,8 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}input,text
 <div id="mfa-enroll" class="hide"><p class="note">Open an authenticator app (Google Authenticator, Microsoft Authenticator or 1Password), add an account, and scan this code. Or type the key below.</p><img id="mfa-qr" class="qr" alt="QR code"><p class="note mono" id="mfa-secret" style="text-align:center;word-break:break-all"></p></div>
 <label>6-digit code</label><input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button class="btn" id="mfa-btn">Verify</button><button class="btn sec signout">Sign out</button><div id="mfa-msg" class="msg"></div></div></section>
 
-<section class="screen hide" id="s-claim"><div class="card"><h2>Claim this vault</h2><p class="note">Enter the one-time setup code NEX gave you. After this, the vault belongs only to this account.</p>
-<label>Setup code</label><input id="claim-code" autocomplete="off"><button class="btn" id="claim-btn">Claim vault</button><button class="btn sec signout">Sign out</button><div id="claim-msg" class="msg"></div></div></section>
+<section class="screen hide" id="s-claim"><div class="card"><h2>Almost done</h2><p class="note">Your account and 2-factor login are set up. Tell NEX <b>"account created"</b>. NEX will check that your email is confirmed and make this account the vault owner. Then tap <b>Reload</b>.</p>
+<input id="claim-code" type="hidden"><button class="btn" id="claim-reload">Reload</button><button class="btn sec signout">Sign out</button><button class="hide" id="claim-btn"></button><div id="claim-msg" class="msg"></div></div></section>
 
 <section class="screen hide" id="s-notowner"><div class="card"><h2>Not authorized</h2><p class="note">This vault belongs to another account. This account cannot see any evidence.</p><button class="btn sec signout">Sign out</button></div></section>
 
