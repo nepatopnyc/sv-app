@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; media-src blob:; connect-src https://wokjsjwtppqcnqyemqyv.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex, nofollow"><meta name="referrer" content="no-referrer">
+<title>Secure Vault</title>
+<style>
+:root{--bg:#060b16;--panel:#0d1628;--panel2:#111d35;--line:#1d2c4d;--txt:#e7eefc;--mut:#8a9bbd;--green:#7dff4a;--blue:#4fb7ff;--amber:#ffb63d;--red:#ff4d5e;--gold:#f5c542}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,system-ui,Segoe UI,sans-serif;background:radial-gradient(1200px 600px at 70% -10%,#12305a 0%,transparent 60%),var(--bg);color:var(--txt)}
+.wrap{max-width:600px;margin:0 auto;padding:20px 16px 60px}header{display:flex;align-items:center;gap:12px;margin:6px 0 18px}
+h1{font-size:22px;margin:0}.brand{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);margin-top:3px}.brand b{color:var(--gold)}.brand img{width:20px;height:20px;border-radius:4px}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
+h2{font-size:16px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}input,textarea{width:100%;background:#071022;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px;font-size:16px}textarea{min-height:80px}
+.btn{appearance:none;border:0;border-radius:14px;padding:13px 18px;font-weight:600;font-size:16px;cursor:pointer;color:#04110a;background:linear-gradient(180deg,#7dff4a,#3ccf1f);width:100%;margin-top:12px}
+.btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}.btn.sm{width:auto;padding:8px 12px;font-size:14px;margin-top:0}.btn:disabled{opacity:.6}
+.row{display:flex;gap:8px}.row>*{flex:1}.hide{display:none!important}.note{font-size:13px;color:var(--mut);line-height:1.5}
+.msg{font-size:14px;white-space:pre-wrap;margin-top:10px;color:var(--green)}.msg.bad{color:var(--red)}.ok{color:var(--green);font-weight:600}
+.item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:flex-start}.item:last-child{border:0}
+.item small{display:block;color:var(--mut);font-size:12px;margin-top:2px}.grow{flex:1;min-width:0;word-break:break-word}.btns{display:flex;flex-direction:column;gap:6px}
+.mono{font-family:ui-monospace,Menlo,monospace}.prev{max-width:100%;border-radius:10px;margin-top:10px}small{display:block;color:var(--mut)}
+.qr{background:#fff;border-radius:12px;padding:8px;width:200px;height:200px;display:block;margin:10px auto}.pill{display:inline-block;padding:3px 10px;border-radius:99px;border:1px solid var(--line);font-size:12px;color:var(--mut)}
+</style></head><body><div class="wrap">
+<header><svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3z" stroke="#4fb7ff" stroke-width="1.6" fill="#4fb7ff22"/><rect x="8.5" y="10" width="7" height="6" rx="1" stroke="#e7eefc" stroke-width="1.6"/><path d="M10 10V8.5a2 2 0 014 0V10" stroke="#e7eefc" stroke-width="1.6"/></svg>
+<div><h1>Secure Vault</h1><div class="brand">Encrypted private storage</div></div></header>
+
+<section class="screen" id="s-auth"><div class="card"><h2>Sign in</h2>
+<p class="note">Private vault. Only the owner, signed in with 2-factor login and the vault passphrase, can open anything stored here.</p>
+<label>Email</label><input id="email" type="email" autocomplete="username"><label>Password (12+ characters)</label><input id="password" type="password" autocomplete="current-password">
+<button class="btn" id="signin">Sign in</button><button class="btn sec" id="signup">Create owner account</button><div id="auth-msg" class="msg"></div></div>
+<div class="card"><h2>Have a backup file?</h2><p class="note">Open and verify a .nexbak backup with your passphrase, even if this server is down. No login needed.</p><button class="btn sec" id="open-restore">Open a backup file</button></div></section>
+
+<section class="screen hide" id="s-restore"><div class="card"><h2>Open a backup file <button class="btn sec sm" id="back-auth">Back</button></h2>
+<label>Backup file (.nexbak)</label><input id="rs-file" type="file"><label>Vault passphrase</label><input id="rs-pass" type="password">
+<button class="btn" id="rs-btn">Verify and restore original</button><div id="rs-msg" class="msg"></div></div></section>
+
+<section class="screen hide" id="s-mfa"><div class="card"><h2 id="mfa-title">2-factor login</h2>
+<div id="mfa-enroll" class="hide"><p class="note">Open an authenticator app (Google Authenticator, Microsoft Authenticator or 1Password), add an account, and scan this code. Or type the key below.</p><img id="mfa-qr" class="qr" alt="QR code"><p class="note mono" id="mfa-secret" style="text-align:center;word-break:break-all"></p></div>
+<label>6-digit code</label><input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button class="btn" id="mfa-btn">Verify</button><button class="btn sec signout">Sign out</button><div id="mfa-msg" class="msg"></div></div></section>
+
+<section class="screen hide" id="s-claim"><div class="card"><h2>Claim this vault</h2><p class="note">Enter the one-time setup code NEX gave you. After this, the vault belongs only to this account.</p>
+<label>Setup code</label><input id="claim-code" autocomplete="off"><button class="btn" id="claim-btn">Claim vault</button><button class="btn sec signout">Sign out</button><div id="claim-msg" class="msg"></div></div></section>
+
+<section class="screen hide" id="s-notowner"><div class="card"><h2>Not authorized</h2><p class="note">This vault belongs to another account. This account cannot see any evidence.</p><button class="btn sec signout">Sign out</button></div></section>
+
+<section class="screen hide" id="s-pass"><div class="card"><h2 id="pass-title">Vault passphrase</h2>
+<p class="note">Your passphrase encrypts every file on this device before upload. Nobody can open the files without it: not the developer, not the hosting company, not anyone with database access. <b>If you lose it, the evidence cannot be recovered.</b> Write it on paper and keep it somewhere safe.</p>
+<label>Passphrase (12+ characters; 5 or more random words is best)</label><input id="pass" type="password" autocomplete="off"><div id="pass-confirm-wrap"><label>Repeat passphrase</label><input id="pass2" type="password" autocomplete="off"></div>
+<button class="btn" id="pass-btn">Unlock</button><button class="btn sec signout">Sign out</button><div id="pass-msg" class="msg"></div></div></section>
+
+<section class="screen hide" id="s-vault">
+<div class="card"><h2>Vault unlocked <span class="pill" id="count"></span></h2><small id="who"></small><div class="row"><button class="btn sec" id="lock">Lock</button><button class="btn sec signout">Sign out</button></div><p class="note">The vault locks itself after 10 minutes without activity.</p></div>
+<div class="card"><h2>1. Run security tests first</h2><p class="note">Creates a small random test file (40 KB, not evidence; it stays in the vault marked 🧪) and checks encryption, storage, access control, tamper protection and backup on this device and this server.</p><button class="btn" id="test-btn">Run security tests</button><div id="test-out"></div></div>
+<div class="card"><h2>Add evidence</h2><p class="note">Files are kept exactly as they are: no compression, no conversion, no editing. Keep your originals on your phone too.</p>
+<label>Title</label><input id="up-title" placeholder="e.g. Messenger threat screenshots"><label>Note (date, time, place, who, what happened)</label><textarea id="up-note"></textarea>
+<label>Files (photos, screenshots, screen recordings, audio, video)</label><input id="up-file" type="file" multiple><button class="btn" id="up-btn">Encrypt and save</button><div id="up-msg" class="msg"></div>
+<p class="note">Free plan limit: about 1 GB in total. Large videos are split into encrypted 8 MB parts automatically.</p></div>
+<div class="card"><h2>Evidence</h2><div id="list"></div></div>
+<div class="card hide" id="viewer"></div>
+<div class="card"><h2>Chain fingerprint</h2><p class="note">After adding evidence, copy this and email it to yourself and your lawyer. A dated copy outside this server proves later that nothing was changed or removed.</p><pre id="head-out" class="mono" style="white-space:pre-wrap;font-size:12px;color:var(--mut)"></pre><button class="btn sec" id="head-copy">Copy fingerprint</button><div id="head-msg" class="msg"></div></div>
+<div class="card"><h2>Integrity check</h2><p class="note">Re-downloads every file, decrypts it, and confirms its fingerprint and the tamper-evident chains.</p><button class="btn sec" id="verify-btn">Verify everything</button><div id="verify-msg" class="msg"></div></div>
+<div class="card"><h2>Verify a backup file</h2><label>Backup file (.nexbak)</label><input id="rv-file" type="file"><label>Passphrase (leave empty to use the unlocked vault)</label><input id="rv-pass" type="password"><button class="btn sec" id="rv-btn">Verify and restore</button><div id="rv-msg" class="msg"></div></div>
+<div class="card"><h2>Activity log</h2><button class="btn sec" id="log-btn">Show last 50 entries</button><div id="log-msg" class="msg"></div><div id="log-out"></div></div>
+</section>
+
+</div>
+<script src="./core.js"></script>
+<script src="./app.js"></script></body></html>
